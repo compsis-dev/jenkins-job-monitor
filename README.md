@@ -1,5 +1,5 @@
 # jenkins-job-monitor
-Monitora as taferas do Jenkins
+Monitora os estados dos 'jobs' e para cada estado dispara um 'hook'.
 
 # Configuração
 application.yml
