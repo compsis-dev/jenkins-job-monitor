@@ -5,8 +5,8 @@ ENV HTTP_PORT=8080
 EXPOSE $HTTP_PORT
 ENTRYPOINT ["/usr/bin/java", "-jar", "/usr/share/javalin/app.jar"]
 
-HEALTHCHECK --interval=1m --timeout=3s \
-  CMD curl -f http://localhost:$HTTP_PORT/ || exit 1
+HEALTHCHECK --interval=5s --timeout=5s --retries=3 \
+  CMD wget localhost:8080 -q -O - > /dev/null 2>&1
 
 ARG JAR_FILE
 ADD target/$JAR_FILE  /usr/share/javalin/app.jar
