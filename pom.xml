@@ -14,6 +14,7 @@
     <io.javalin.version>2.8.0</io.javalin.version>
     <kotlin.version>1.3.31</kotlin.version>
     <org.slf4j.version>1.7.26</org.slf4j.version>
+    <com.spotify.dockerfile.version>1.4.10</com.spotify.dockerfile.version>
     <org.springframework.version>5.1.7.RELEASE</org.springframework.version>
     <org.yaml.snakeyaml.version>1.24</org.yaml.snakeyaml.version>
   </properties>
@@ -105,7 +106,7 @@
       <plugin>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-plugin</artifactId>
-        <version>1.4.10</version>
+        <version>${com.spotify.dockerfile.version}</version>
         <executions>
           <execution>
             <id>default</id>
@@ -116,39 +117,21 @@
           </execution>
         </executions>
         <configuration>
-          <repository>nexus:8083/compsis/${project.artifactId}</repository>
+          <repository>compsis/${project.artifactId}</repository>
           <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
           <tag>latest</tag>
           <buildArgs>
             <JAR_FILE>${project.build.finalName}.jar</JAR_FILE>
           </buildArgs>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>com.spotify</groupId>
-            <artifactId>docker-client</artifactId>
-            <classifier>shaded</classifier>
-            <version>8.16.0</version>
-          </dependency>
-        </dependencies>
       </plugin>
     </plugins>
     <extensions>
       <extension>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-extension</artifactId>
-        <version>1.4.10</version>
+        <version>${com.spotify.dockerfile.version}</version>
       </extension>
     </extensions>
   </build>
-  <distributionManagement>
-    <repository>
-      <id>nexus-release</id>
-      <url>http://nexus:8081/repository/maven-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>nexus-release</id>
-      <url>http://nexus:8081/repository/maven-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 </project>
