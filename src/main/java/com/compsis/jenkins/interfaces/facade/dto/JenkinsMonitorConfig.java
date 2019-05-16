@@ -2,14 +2,13 @@ package com.compsis.jenkins.interfaces.facade.dto;
 
 import java.util.List;
 
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
 public class JenkinsMonitorConfig {
 
     private ServerConfig server;
 
     private JenkinsConfig jenkins;
+
+    private String checksum;
 
     public ServerConfig getServer () {
         return server;
@@ -25,6 +24,14 @@ public class JenkinsMonitorConfig {
 
     public void setJenkins ( JenkinsConfig jenkins ) {
         this.jenkins = jenkins;
+    }
+
+    public String getChecksum () {
+        return checksum;
+    }
+
+    public void setChecksum ( String checksum ) {
+        this.checksum = checksum;
     }
 
     public static class ServerConfig {

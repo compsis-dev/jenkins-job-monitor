@@ -43,15 +43,5 @@ public class JenkinsMonitorApplication {
         return app;
     }
 
-    @Bean
-    @Scope ( "singleton" )
-    private JenkinsMonitorConfig jenkinsMonitorConfig () throws FileNotFoundException {
-        Representer representer = new Representer();
-        representer.getPropertyUtils().setSkipMissingProperties( true );
-        Constructor constructor = new Constructor( JenkinsMonitorConfig.class );
-        Yaml yaml = new Yaml( constructor , representer );
-
-        InputStream inputStream = new FileInputStream( APPLICATION_FILE );
-        return yaml.loadAs( inputStream , JenkinsMonitorConfig.class );
     }
 }

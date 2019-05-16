@@ -8,39 +8,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
-import com.compsis.jenkins.interfaces.facade.JenkinsJobMonitorFacade;
+import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 
-@Component
-public class JenkinsMonitorJob implements InitializingBean , Runnable {
-    private static final Logger logger = LoggerFactory.getLogger( JenkinsMonitorJob.class );
+@Configuration ( "configurationLoaderJob" )
+public class ConfigurationLoaderJob implements InitializingBean , Runnable {
+    private static final Logger logger = LoggerFactory.getLogger( ConfigurationLoaderJob.class );
 
     private static boolean RUNNING = false;
 
     @Autowired
-    JenkinsJobMonitorFacade facade;
+    ApplicationConfigFacade applicationConfigFacade;
 
     @Override
     public synchronized void run () {
         RUNNING = true;
-
         try {
-            facade.checkJobs();
+            execute();
         } catch ( RuntimeException e ) {
-            logger.warn( "Execution failed" , e );
+            logger.warn( "Unable check application config file" , e );
         } finally {
             RUNNING = false;
+        }
+    }
+
+    private void execute () {
+        if ( applicationConfigFacade.isFileChanged() ) {
+            applicationConfigFacade.reload();
         }
     }
 
     @Override
     public void afterPropertiesSet () {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool( 1 );
-        scheduler.scheduleWithFixedDelay( this , 0 , 10 , TimeUnit.SECONDS );
+        scheduler.scheduleWithFixedDelay( this , 10 , 5 , TimeUnit.SECONDS );
     }
 
-    public Boolean isRunning () {
+    public boolean isRunning () {
         return RUNNING;
     }
 }
