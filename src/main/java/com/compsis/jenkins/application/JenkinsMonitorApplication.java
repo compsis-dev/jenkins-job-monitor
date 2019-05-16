@@ -1,47 +1,46 @@
 package com.compsis.jenkins.application;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.representer.Representer;
-
-import com.compsis.jenkins.interfaces.facade.dto.JenkinsMonitorConfig;
+import org.springframework.context.annotation.Configuration;
 
 import io.javalin.Javalin;
 
-@Component
-public class JenkinsMonitorApplication {
+@Configuration
+public class JenkinsMonitorApplication implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger( JenkinsMonitorApplication.class );
 
+    private static long STARTED_MILLIS;
     private static final int SERVER_PORT = 8080;
 
-    private static final String APPLICATION_FILE = "config/application.yml";
+    @Autowired
+    DefaultListableBeanFactory beanFactory;
 
     public static void main ( String[] args ) {
-        final long t0 = System.currentTimeMillis();
+        JenkinsMonitorApplication.run( JenkinsMonitorApplication.class , args );
+    }
+
+    public static ConfigurableApplicationContext run ( Class < JenkinsMonitorApplication > applicationClass , String[] args ) {
+        STARTED_MILLIS = System.currentTimeMillis();
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
         applicationContext.scan( "com.compsis.jenkins" );
         applicationContext.refresh();
         applicationContext.close();
-        logger.info( "Spring initilized in {}ms" , ( System.currentTimeMillis() - t0 ) );
+        return applicationContext;
     }
 
-    @Bean
-    @Scope ( "singleton" )
-    public Javalin run () throws FileNotFoundException {
-        Javalin app = Javalin.create().start( SERVER_PORT );
-        app.get( "/" , ctx -> ctx.result( "up" ) );
-        return app;
-    }
-
+    @Override
+    public void afterPropertiesSet () {
+        Javalin application = Javalin.create();
+        application.disableStartupBanner();
+        application.start( SERVER_PORT );
+        application.get( "/" , ctx -> ctx.result( "up" ) );
+        beanFactory.registerSingleton( "application" , Javalin.class );
+        logger.info( "Application started in {}ms" , ( System.currentTimeMillis() - STARTED_MILLIS ) );
     }
 }
