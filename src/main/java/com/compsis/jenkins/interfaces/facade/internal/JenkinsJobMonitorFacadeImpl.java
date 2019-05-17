@@ -21,9 +21,9 @@ public class JenkinsJobMonitorFacadeImpl implements JenkinsJobMonitorFacade {
     private static final Map < String , String > JOB_STATUS_CACHE = new HashMap < String , String >();
 
     @Autowired
-    ApplicationConfigFacade applicationConfigFacade;
-    @Autowired
     JenkinsHttpClient httpClient;
+    @Autowired
+    ApplicationConfigFacade applicationConfigFacade;
 
     @Override
     public void checkJobs () {

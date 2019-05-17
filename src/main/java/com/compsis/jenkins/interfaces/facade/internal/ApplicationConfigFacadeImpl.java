@@ -2,6 +2,7 @@ package com.compsis.jenkins.interfaces.facade.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -11,9 +12,8 @@ import java.util.Scanner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -23,15 +23,15 @@ import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 import com.compsis.jenkins.interfaces.facade.dto.JenkinsMonitorConfig;
 
 @Service
+@Scope ( "singleton" )
 public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     private static final Logger logger = LoggerFactory.getLogger( ApplicationConfigFacadeImpl.class );
 
-    private static final String BEAN_NAME = "jenkinsMonitorConfig";
     private static final String APPLICATION_FILE = "application.yml";
     private static final String CHECKSUM_ALGORITHM = "SHA-1";
 
-    @Autowired
-    DefaultListableBeanFactory beanFactory;
+    private File applicationFile;
+    private JenkinsMonitorConfig config;
 
     @Bean
     public Yaml jenkinsMonitorConfigYaml () {
@@ -43,37 +43,40 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
 
     @Override
     public synchronized JenkinsMonitorConfig getConfig () {
-        File applicationFile = findApplicationFile();
-        if ( ! applicationFile.exists() ) {
-            logger.warn( "Unable to find {}" , APPLICATION_FILE );
-            return null;
+        if ( config != null ) {
+            return config;
         }
 
-        JenkinsMonitorConfig config;
-        if ( beanFactory.isBeanNameInUse( BEAN_NAME ) ) {
-            config = beanFactory.getBean( BEAN_NAME , JenkinsMonitorConfig.class );
-        } else {
+        try {
+            File applicationFile = safeGetFile();
             String yaml = readAsString( applicationFile );
             config = loadYamlAsObject( yaml , digestChecksum( yaml ) );
-            beanFactory.registerSingleton( BEAN_NAME , config );
+            logger.info( "{} loaded (checksum: {})" , APPLICATION_FILE , config.getChecksum() );
+            return config;
+        } catch ( FileNotFoundException e ) {
+            throw new RuntimeException( e );
         }
+    }
 
-        return config;
+    public void setConfig ( JenkinsMonitorConfig config ) {
+        this.config = config;
     }
 
     @Override
     public boolean isFileChanged () {
-        JenkinsMonitorConfig jenkinsMonitorConfig = getConfig();
-        File applicationFile = findApplicationFile();
-        String checksum = digestChecksum( readAsString( applicationFile ) );
-        return ! jenkinsMonitorConfig.getChecksum().equals( checksum );
+        try {
+            File applicationFile = safeGetFile();
+            String checksum = digestChecksum( readAsString( applicationFile ) );
+            return ! getConfig().getChecksum().equals( checksum );
+        } catch ( FileNotFoundException e ) {
+            throw new RuntimeException( e );
+        }
     }
 
     @Override
     public void reload () {
-        logger.info( "Reloading jenkinsMonitorConfig bean from {}" , APPLICATION_FILE );
-        beanFactory.destroySingleton( BEAN_NAME );
-        getConfig();
+        logger.info( "Reloading {}..." , APPLICATION_FILE );
+        setConfig( null );
     }
 
     public JenkinsMonitorConfig loadYamlAsObject ( String yaml , String checksum ) {
@@ -110,12 +113,23 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
         }
     }
 
-    public File findApplicationFile () {
+    public File safeGetFile () throws FileNotFoundException {
+        if ( applicationFile != null ) {
+            return applicationFile;
+        }
+
         URL resource = getClass().getResource( "/" + APPLICATION_FILE );
         File applicationFile = resource == null ? new File( APPLICATION_FILE ) : new File( resource.getFile() );
         if ( ! applicationFile.exists() ) {
             applicationFile = new File( "config" , APPLICATION_FILE );
         }
+
+        if ( ! applicationFile.exists() ) {
+            logger.warn( "{} not found" , APPLICATION_FILE );
+            throw new FileNotFoundException( "Unable to find " + APPLICATION_FILE );
+        }
+
+        this.applicationFile = applicationFile;
         return applicationFile;
     }
 }
