@@ -8,11 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 
-@Configuration ( "configurationLoaderJob" )
+@Component
+@Scope ( "singleton" )
 public class ConfigurationLoaderJob implements InitializingBean , Runnable {
     private static final Logger logger = LoggerFactory.getLogger( ConfigurationLoaderJob.class );
 
