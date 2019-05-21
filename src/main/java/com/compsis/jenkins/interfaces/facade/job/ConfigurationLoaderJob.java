@@ -44,7 +44,7 @@ public class ConfigurationLoaderJob implements InitializingBean , Runnable {
     @Override
     public void afterPropertiesSet () {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool( 1 );
-        scheduler.scheduleWithFixedDelay( this , 10 , 15 , TimeUnit.SECONDS );
+        scheduler.scheduleWithFixedDelay( this , 0 , 15 , TimeUnit.SECONDS );
     }
 
     public boolean isRunning () {
