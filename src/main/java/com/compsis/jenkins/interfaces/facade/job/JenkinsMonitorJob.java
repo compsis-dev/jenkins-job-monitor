@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 import com.compsis.jenkins.interfaces.facade.JenkinsJobMonitorFacade;
 
 @Component
@@ -20,21 +19,18 @@ public class JenkinsMonitorJob implements InitializingBean , Runnable {
     private static final Logger logger = LoggerFactory.getLogger( JenkinsMonitorJob.class );
 
     private static boolean RUNNING = false;
+    private static final int DELAY_MINUTES = 2;
 
     @Autowired
     JenkinsJobMonitorFacade jobFacade;
 
-    @Autowired
-    ApplicationConfigFacade configFacade;
-
     @Override
     public synchronized void run () {
         RUNNING = true;
-
         try {
             jobFacade.checkJobs();
         } catch ( RuntimeException e ) {
-            logger.warn( "Execution failed" , e );
+            logger.warn( "Job execution failed" , e );
         } finally {
             RUNNING = false;
         }
@@ -43,7 +39,8 @@ public class JenkinsMonitorJob implements InitializingBean , Runnable {
     @Override
     public void afterPropertiesSet () {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool( 1 );
-        scheduler.scheduleWithFixedDelay( this , 0 , 2 , TimeUnit.MINUTES );
+        scheduler.scheduleWithFixedDelay( this , 0 , DELAY_MINUTES , TimeUnit.MINUTES );
+        logger.info( "Job scheduled with {} minutes interval" , DELAY_MINUTES );
     }
 
     public Boolean isRunning () {
