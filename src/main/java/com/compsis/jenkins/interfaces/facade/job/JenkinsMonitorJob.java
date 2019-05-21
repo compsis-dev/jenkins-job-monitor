@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 import com.compsis.jenkins.interfaces.facade.JenkinsJobMonitorFacade;
 
 @Component
@@ -21,14 +22,17 @@ public class JenkinsMonitorJob implements InitializingBean , Runnable {
     private static boolean RUNNING = false;
 
     @Autowired
-    JenkinsJobMonitorFacade facade;
+    JenkinsJobMonitorFacade jobFacade;
+
+    @Autowired
+    ApplicationConfigFacade configFacade;
 
     @Override
     public synchronized void run () {
         RUNNING = true;
 
         try {
-            facade.checkJobs();
+            jobFacade.checkJobs();
         } catch ( RuntimeException e ) {
             logger.warn( "Execution failed" , e );
         } finally {
@@ -39,7 +43,7 @@ public class JenkinsMonitorJob implements InitializingBean , Runnable {
     @Override
     public void afterPropertiesSet () {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool( 1 );
-        scheduler.scheduleWithFixedDelay( this , 0 , 10 , TimeUnit.SECONDS );
+        scheduler.scheduleWithFixedDelay( this , 0 , 2 , TimeUnit.MINUTES );
     }
 
     public Boolean isRunning () {
