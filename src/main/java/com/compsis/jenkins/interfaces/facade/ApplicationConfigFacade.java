@@ -5,7 +5,7 @@ import com.compsis.jenkins.interfaces.facade.dto.JenkinsMonitorConfig;
 public interface ApplicationConfigFacade {
     JenkinsMonitorConfig getConfig ();
 
-    boolean isFileChanged ();
+    boolean hasChanged ();
 
     void reload ();
 }

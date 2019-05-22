@@ -38,17 +38,17 @@ public class JenkinsJobMonitorFacadeImpl implements JenkinsJobMonitorFacade {
         logger.debug( "Checking job {}" , jobName );
         String newStatus = httpClient.getStatus( jobName );
         if ( newStatus == null ) {
-            logger.warn( "Unable to request {} job status" , newStatus );
+            logger.warn( "Unable to request {} job status" , jobName );
             return;
         }
 
         String oldStatus = JOB_STATUS_CACHE.get( jobName );
         if ( oldStatus != null && oldStatus.equals( newStatus ) ) {
-            logger.debug( "{} job status don't changed" , jobName );
+            logger.debug( "{} job status not changed" , jobName );
             return;
         }
 
-        logger.info( "{} job status changed: {}" , jobName , newStatus );
+        logger.info( "{} job status has changed to {}" , jobName , newStatus );
         JOB_STATUS_CACHE.put( jobName , newStatus );
 
         hooks.parallelStream().forEach( hook -> {

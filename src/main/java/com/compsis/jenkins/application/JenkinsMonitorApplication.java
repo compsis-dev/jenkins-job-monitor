@@ -15,7 +15,6 @@ public class JenkinsMonitorApplication {
     public static ConfigurableApplicationContext run ( Class < JenkinsMonitorApplication > applicationClass , String[] args ) {
         logger.info( "Initializing application..." );
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
-        applicationContext.setId( applicationClass.getSimpleName() );
         applicationContext.scan( "com.compsis.jenkins" );
         applicationContext.refresh();
         applicationContext.close();

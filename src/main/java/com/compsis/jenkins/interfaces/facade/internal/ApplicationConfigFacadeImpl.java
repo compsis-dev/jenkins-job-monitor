@@ -13,7 +13,6 @@ import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -23,7 +22,6 @@ import com.compsis.jenkins.interfaces.facade.ApplicationConfigFacade;
 import com.compsis.jenkins.interfaces.facade.dto.JenkinsMonitorConfig;
 
 @Service
-@Scope ( "singleton" )
 public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     private static final Logger logger = LoggerFactory.getLogger( ApplicationConfigFacadeImpl.class );
 
@@ -63,7 +61,7 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     }
 
     @Override
-    public boolean isFileChanged () {
+    public boolean hasChanged () {
         try {
             File applicationFile = safeGetFile();
             String checksum = digestChecksum( readAsString( applicationFile ) );

@@ -40,22 +40,17 @@ public class JenkinsHttpClient {
     }
 
     public String getStatus ( String jobName ) {
-        JenkinsConfig jenkinsConfig = applicationConfigFacade.getConfig().getJenkins();
-
-        StringBuilder jobStatusUri = new StringBuilder( jenkinsConfig.getUrl() );
-        for ( String jobPath : jobName.split( "/" ) ) {
-            jobStatusUri.append( "/job/" ).append( jobPath );
-        }
-        jobStatusUri.append( "/lastBuild/api/json" );
+        String url = buildJobUrl( jobName );
 
         HttpRequest request = HttpRequest.newBuilder() //
-                .uri( URI.create( jobStatusUri.toString() ) ) //
-                .timeout( Duration.ofMinutes( 1 ) ) //
+                .uri( URI.create( url.toString() ) ) //
+                .timeout( Duration.ofSeconds( 10 ) ) //
                 .header( "Authorization" , getAuthorization() ) //
                 .GET().build();
 
+        HttpResponse < InputStream > response;
         try {
-            HttpResponse < InputStream > response = client.send( request , BodyHandlers.ofInputStream() );
+            response = client.send( request , BodyHandlers.ofInputStream() );
             if ( response.statusCode() == HttpStatus.OK_200 ) {
                 InputStream bodyStream = response.body();
                 return ( String ) jsonService.fromJson( bodyStream , Map.class ).get( "result" );
@@ -63,9 +58,19 @@ public class JenkinsHttpClient {
                 return HTTP_NOK;
             }
         } catch ( IOException | InterruptedException e ) {
-            logger.warn( "Exception checking {} job status, URL: {}" , jobName , jobStatusUri.toString() , e );
+            logger.warn( "Exception checking {} job status, URL: {}" , jobName , url.toString() , e );
             throw new RuntimeException( e );
         }
+    }
+
+    private String buildJobUrl ( String jobName ) {
+        JenkinsConfig jenkinsConfig = applicationConfigFacade.getConfig().getJenkins();
+        StringBuilder jobStatusUri = new StringBuilder( jenkinsConfig.getUrl() );
+        for ( String jobPath : jobName.split( "/" ) ) {
+            jobStatusUri.append( "/job/" ).append( jobPath );
+        }
+        jobStatusUri.append( "/lastBuild/api/json" );
+        return jobStatusUri.toString();
     }
 
     public CompletableFuture < HttpResponse < Void > > callHookUrl ( String uri ) {
