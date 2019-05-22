@@ -8,8 +8,11 @@ import java.io.InputStream;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,23 +119,22 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     }
 
     private File findApplicationFile () throws FileNotFoundException {
+        List < File > paths = getPaths();
+        return paths.stream().filter( file -> file.exists() ).findFirst() //
+                .orElseThrow( () -> {
+                    logger.warn( "Application file not found at: {}" , paths.stream() //
+                            .map( file -> String.valueOf( file.getAbsolutePath() ) ) //
+                            .collect( Collectors.joining( "-" , "[" , "]" ) ) );
+
+                    return new FileNotFoundException( "Unable to find " + APPLICATION_FILE );
+                } );
+    }
+
+    public List < File > getPaths () {
         URL resource = getClass().getResource( "/" + APPLICATION_FILE );
-        File applicationFile = Optional.ofNullable( resource ) //
+        return Arrays.asList( Optional.ofNullable( resource ) //
                 .map( r -> new File( resource.getFile() ) ) //
-                .orElse( new File( APPLICATION_FILE ) );
-
-        if ( ! applicationFile.exists() ) {
-            logger.debug( "{} file not found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
-            applicationFile = new File( "config" , APPLICATION_FILE );
-        }
-
-        if ( ! applicationFile.exists() ) {
-            logger.debug( "{} file not found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
-            logger.warn( "{} not found" , APPLICATION_FILE );
-            throw new FileNotFoundException( "Unable to find " + APPLICATION_FILE );
-        }
-
-        logger.debug( "{} file found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
-        return applicationFile;
+                .orElse( new File( APPLICATION_FILE ) ) , //
+                new File( "config" , APPLICATION_FILE ) );
     }
 }
