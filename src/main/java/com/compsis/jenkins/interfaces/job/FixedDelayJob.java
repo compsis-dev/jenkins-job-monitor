@@ -25,7 +25,7 @@ public abstract class FixedDelayJob implements InitializingBean , Runnable {
     @Override
     public void run () {
         if ( running ) {
-            logger.warn( "Job canceled due a running state" );
+            logger.warn( "Job execution canceled due a running state" );
             return;
         }
 

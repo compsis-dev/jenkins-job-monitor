@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -28,7 +29,6 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     private static final String APPLICATION_FILE = "application.yml";
     private static final String CHECKSUM_ALGORITHM = "SHA-1";
 
-    private File applicationFile;
     private JenkinsMonitorConfig config;
 
     @Bean
@@ -40,30 +40,34 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
     }
 
     @Override
-    public synchronized JenkinsMonitorConfig getConfig () {
+    public JenkinsMonitorConfig getConfig () {
         if ( config != null ) {
             return config;
         }
-
-        try {
-            File applicationFile = safeGetFile();
-            String yaml = readAsString( applicationFile );
-            config = loadYamlAsObject( yaml , digestChecksum( yaml ) );
-            logger.info( "{} loaded (checksum: {})" , APPLICATION_FILE , config.getChecksum() );
-            return config;
-        } catch ( FileNotFoundException e ) {
-            throw new RuntimeException( e );
-        }
+        config = loadConfig();
+        return config;
     }
 
-    public void setConfig ( JenkinsMonitorConfig config ) {
-        this.config = config;
+    private JenkinsMonitorConfig loadConfig () {
+        try {
+            File applicationFile = findApplicationFile();
+            String yaml = readAsString( applicationFile );
+            JenkinsMonitorConfig config = loadYamlAsObject( yaml , digestChecksum( yaml ) );
+            logger.info( "Application config loaded (checksum: {})" , config.getChecksum() );
+            return config;
+        } catch ( FileNotFoundException e ) {
+            throw new RuntimeException( "Unable to load application config" , e );
+        }
     }
 
     @Override
     public boolean hasChanged () {
+        if ( config == null ) {
+            return false;
+        }
+
         try {
-            File applicationFile = safeGetFile();
+            File applicationFile = findApplicationFile();
             String checksum = digestChecksum( readAsString( applicationFile ) );
             return ! getConfig().getChecksum().equals( checksum );
         } catch ( FileNotFoundException e ) {
@@ -73,8 +77,8 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
 
     @Override
     public void reload () {
-        logger.info( "Reloading {}..." , APPLICATION_FILE );
-        setConfig( null );
+        logger.info( "Reloading applcation config" );
+        config = loadConfig();
     }
 
     public JenkinsMonitorConfig loadYamlAsObject ( String yaml , String checksum ) {
@@ -111,23 +115,24 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
         }
     }
 
-    public File safeGetFile () throws FileNotFoundException {
-        if ( applicationFile != null ) {
-            return applicationFile;
-        }
-
+    private File findApplicationFile () throws FileNotFoundException {
         URL resource = getClass().getResource( "/" + APPLICATION_FILE );
-        File applicationFile = resource == null ? new File( APPLICATION_FILE ) : new File( resource.getFile() );
+        File applicationFile = Optional.ofNullable( resource ) //
+                .map( r -> new File( resource.getFile() ) ) //
+                .orElse( new File( APPLICATION_FILE ) );
+
         if ( ! applicationFile.exists() ) {
+            logger.debug( "{} file not found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
             applicationFile = new File( "config" , APPLICATION_FILE );
         }
 
         if ( ! applicationFile.exists() ) {
+            logger.debug( "{} file not found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
             logger.warn( "{} not found" , APPLICATION_FILE );
             throw new FileNotFoundException( "Unable to find " + APPLICATION_FILE );
         }
 
-        this.applicationFile = applicationFile;
+        logger.debug( "{} file found at: {}" , APPLICATION_FILE , applicationFile.getAbsolutePath() );
         return applicationFile;
     }
 }
