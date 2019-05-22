@@ -124,7 +124,7 @@ public class ApplicationConfigFacadeImpl implements ApplicationConfigFacade {
                 .orElseThrow( () -> {
                     logger.warn( "Application file not found at: {}" , paths.stream() //
                             .map( file -> String.valueOf( file.getAbsolutePath() ) ) //
-                            .collect( Collectors.joining( "-" , "[" , "]" ) ) );
+                            .collect( Collectors.joining( ", " ) ) );
 
                     return new FileNotFoundException( "Unable to find " + APPLICATION_FILE );
                 } );
