@@ -20,7 +20,7 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <org.springframework.version>5.1.7.RELEASE</org.springframework.version>
-    <org.yaml.snakeyaml.version>1.24</org.yaml.snakeyaml.version>
+    <org.yaml.snakeyaml.version>1.31</org.yaml.snakeyaml.version>
   </properties>
   <dependencies>
     <dependency>
